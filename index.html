@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d6e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PaveRec-ITS">
+<title>PaveRec-ITS Web</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="ikon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="ikon-180.png">
+<style>
+  :root {
+    --biru: #0b3d6e; --biru2: #155a9c; --tinta: #1b2430; --abu: #5d6b7a; --garis: #d8dee6;
+    --latar: #f3f5f8; --merah: #d32f2f; --hijau: #2e7d32; --kuning: #f9a825;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--latar); color: var(--tinta);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { background: var(--biru); color: #fff; padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    display: flex; align-items: center; gap: 10px; }
+  header h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: .2px; }
+  header small { opacity: .75; font-size: 12px; display: block; font-weight: 400; }
+  header .tab { margin-left: auto; display: flex; gap: 6px; }
+  header .tab button { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.45);
+    border-radius: 16px; padding: 5px 12px; font-size: 13px; }
+  header .tab button.aktif { background: #fff; color: var(--biru); }
+  main { max-width: 640px; margin: 0 auto; padding: 14px 14px 40px; }
+  .kartu { background: #fff; border: 1px solid var(--garis); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .kartu h2 { font-size: 15px; margin: 0 0 10px; }
+  label { display: block; font-size: 13px; color: var(--abu); margin: 10px 0 4px; }
+  input, select, textarea { width: 100%; font: inherit; padding: 9px 10px; border: 1px solid var(--garis);
+    border-radius: 8px; background: #fff; color: var(--tinta); }
+  textarea { min-height: 54px; resize: vertical; }
+  .baris { display: flex; gap: 10px; } .baris > * { flex: 1; }
+  .pilih { display: flex; gap: 8px; margin-top: 4px; }
+  .pilih label { flex: 1; margin: 0; border: 1px solid var(--garis); border-radius: 8px; padding: 9px; color: var(--tinta);
+    text-align: center; font-size: 14px; }
+  .pilih input { display: none; }
+  .pilih input:checked + span { color: var(--biru); font-weight: 650; }
+  .pilih label:has(input:checked) { border-color: var(--biru); background: #eaf2fb; }
+  button.utama { width: 100%; background: var(--biru); color: #fff; border: 0; border-radius: 10px;
+    padding: 13px; font-size: 16px; font-weight: 600; margin-top: 14px; }
+  button.utama:disabled { opacity: .5; }
+  button.kecil { background: #fff; border: 1px solid var(--garis); border-radius: 8px; padding: 7px 11px; font: inherit;
+    font-size: 13px; color: var(--tinta); }
+  button.kecil.biru { background: var(--biru); color: #fff; border-color: var(--biru); }
+  button.kecil.merah { color: var(--merah); }
+  .catatan { font-size: 12.5px; color: var(--abu); margin: 6px 0 0; }
+  .peringatan { background: #fff4e5; border: 1px solid #f5c27a; color: #6b4200; border-radius: 10px; padding: 10px 12px;
+    font-size: 13.5px; margin-bottom: 12px; }
+  .galat { background: #fdecea; border-color: #f1a9a0; color: #7f1d1d; }
+  .sesi { border-top: 1px solid var(--garis); padding: 11px 0; }
+  .sesi:first-child { border-top: 0; padding-top: 0; }
+  .sesi b { display: block; font-size: 14px; word-break: break-all; }
+  .sesi .info { font-size: 12.5px; color: var(--abu); }
+  .sesi .aksi { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+  .berkas { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; word-break: break-all; }
+  .berkas span { flex: 1; }
+  .kemajuan { height: 6px; background: var(--garis); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .kemajuan div { height: 100%; width: 0; background: var(--biru2); transition: width .2s; }
+  .tersembunyi { display: none !important; }
+
+  /* ------- layar rekam ------- */
+  #layarRekam { position: fixed; inset: 0; background: #000; z-index: 10; color: #fff; }
+  #layarRekam video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+  .hud { position: absolute; left: 0; right: 0; display: flex; flex-wrap: wrap; gap: 6px; padding: 8px;
+    padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
+  .hud.atas { top: 0; padding-top: max(8px, env(safe-area-inset-top)); }
+  .hud.bawah { bottom: 0; padding-bottom: max(10px, env(safe-area-inset-bottom)); align-items: flex-end; }
+  .lencana { background: rgba(0,0,0,.55); border-radius: 8px; padding: 5px 9px; font-size: 13px;
+    font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lencana.baik { color: #9be79f; } .lencana.sedang { color: #ffd76a; } .lencana.buruk { color: #ff8a80; }
+  .lencana.rec { background: var(--merah); color: #fff; font-weight: 700; }
+  #pesanRekam { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,.65);
+    padding: 10px 16px; border-radius: 10px; font-size: 15px; text-align: center; max-width: 80%; }
+  .tombolRekam { width: 74px; height: 74px; border-radius: 50%; border: 4px solid #fff; background: var(--merah);
+    margin-left: auto; flex: none; font-size: 0; position: relative; }
+  .tombolRekam.henti::after { content: ""; position: absolute; inset: 22px; background: #fff; border-radius: 4px; }
+  .tombolRekam:disabled { opacity: .45; }
+  .tombolTutup { background: rgba(0,0,0,.55); color: #fff; border: 0; border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+  .pengukurDatar { width: 120px; height: 120px; position: relative; flex: none; }
+  .pengukurDatar svg { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>PaveRec-ITS Web</h1><small>Perekam survei untuk PaveScanPro-ITS</small></div>
+  <div class="tab">
+    <button id="tabBaru" class="aktif">Rekam</button>
+    <button id="tabSesi">Sesi</button>
+  </div>
+</header>
+
+<main>
+  <div id="pesanAman" class="peringatan galat tersembunyi">
+    Halaman ini harus dibuka lewat <b>https://</b>. Tanpa itu, peramban menolak kamera, GPS, dan sensor getaran.
+  </div>
+  <div id="pesanDukungan" class="peringatan tersembunyi"></div>
+
+  <!-- ===================== halaman rekam ===================== -->
+  <section id="halBaru">
+    <div class="kartu">
+      <h2>Sesi baru</h2>
+      <div class="pilih">
+        <label><input type="radio" name="jenis" value="survei" checked><span>● Survei ruas</span></label>
+        <label><input type="radio" name="jenis" value="kalibrasi"><span>▣ Kalibrasi banner</span></label>
+      </div>
+      <p class="catatan" id="ketJenis">Rekam video, GPS, dan getaran sepanjang ruas. Henti manual.</p>
+      <label for="ruas">Nama ruas</label>
+      <input id="ruas" placeholder="mis. Jl. Raya ITS" autocomplete="off">
+      <div class="baris">
+        <div><label for="surveyor">Surveyor</label><input id="surveyor" autocomplete="name"></div>
+        <div><label for="kendaraan">Kendaraan</label><input id="kendaraan" placeholder="mis. Avanza B 1234"></div>
+      </div>
+      <label for="catatanSesi">Catatan</label>
+      <textarea id="catatanSesi" placeholder="cuaca, lajur, kecepatan rencana, …"></textarea>
+    </div>
+
+    <div class="kartu">
+      <h2>Kamera</h2>
+      <label for="hfov">Sudut pandang lensa, sisi panjang (°) — opsional</label>
+      <input id="hfov" type="text" inputmode="decimal" placeholder="mis. 73,7 — kosongkan bila belum tahu">
+      <p class="catatan">Peramban tidak bisa membaca spesifikasi lensa. Bila kosong, PaveScanPro-ITS memakai hasil
+        rekaman <b>kalibrasi banner</b>. Isi sekali; disimpan di HP ini.</p>
+      <label for="kamera">Kamera belakang</label>
+      <select id="kamera"><option value="">(otomatis — kamera utama)</option></select>
+      <p class="catatan">Pasang HP <b>mendatar (lanskap)</b> di dasbor, lensa utama 1×, layar tetap menyala selama merekam.</p>
+      <button class="utama" id="btnSiapkan">Buka kamera &amp; sensor</button>
+    </div>
+  </section>
+
+  <!-- ===================== halaman sesi ===================== -->
+  <section id="halSesi" class="tersembunyi">
+    <div class="kartu">
+      <h2>Sesi tersimpan di HP ini</h2>
+      <label for="batas">Ukuran berkas kiriman</label>
+      <select id="batas">
+        <option value="1900">Utuh (dibagi otomatis bila &gt; 1,9 GB — batas WhatsApp 2 GB)</option>
+        <option value="95">Bagian 95 MB (jaringan lemah)</option>
+        <option value="500">Bagian 500 MB</option>
+        <option value="1000">Bagian 1 GB</option>
+      </select>
+      <p class="catatan">Berkas bagian bernama <code>.zip.001</code>, <code>.zip.002</code>, …; kirim semuanya dan
+        simpan di satu folder. PaveScanPro-ITS menyambungnya kembali.</p>
+      <div id="daftarSesi" style="margin-top:12px"></div>
+      <p class="catatan" id="infoPenyimpanan"></p>
+    </div>
+    <div class="kartu">
+      <h2>Kirim lewat WhatsApp</h2>
+      <p class="catatan" style="margin-top:0" id="caraKirim"></p>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== layar kamera ===================== -->
+<div id="layarRekam" class="tersembunyi">
+  <video id="pratinjau" playsinline muted autoplay></video>
+  <div class="hud atas">
+    <span class="lencana" id="hudWaktu">Siap</span>
+    <span class="lencana" id="hudGps">GPS …</span>
+    <span class="lencana" id="hudLaju">— km/j</span>
+    <span class="lencana" id="hudJarak">0,00 km</span>
+    <span class="lencana" id="hudSensor">Getaran …</span>
+    <span class="lencana" id="hudVideo"></span>
+    <span class="lencana tersembunyi" id="hudBanner"></span>
+  </div>
+  <div id="pesanRekam" class="tersembunyi"></div>
+  <div class="hud bawah">
+    <button class="tombolTutup" id="btnTutup">✕ Tutup</button>
+    <div class="pengukurDatar">
+      <svg viewBox="-60 -60 120 120" aria-label="sudut pemasangan">
+        <circle r="56" fill="rgba(0,0,0,.5)" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>
+        <line x1="-50" y1="0" x2="50" y2="0" stroke="rgba(255,255,255,.35)" stroke-width="1"/>
+        <g id="garisMiring"><line x1="-44" y1="0" x2="44" y2="0" stroke="#9be79f" stroke-width="3" stroke-linecap="round"/></g>
+        <text id="teksTunduk" y="-20" text-anchor="middle" fill="#fff" font-size="13">tunduk —</text>
+        <text id="teksMiring" y="30" text-anchor="middle" fill="#fff" font-size="13">miring —</text>
+      </svg>
+    </div>
+    <button class="tombolRekam" id="btnRekam" aria-label="Mulai atau henti merekam" disabled>rekam</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   PaveRec-ITS Web — perekam survei berbasis peramban untuk PaveScanPro-ITS
+   (Paten 2026-21). Dr. Cahya Buana — Departemen Teknik Sipil FTSPK ITS.
+
+   Satu sesi = satu folder di dalam .zip, sama dengan PaveRec-ITS Android:
+     <nama>/video.mp4      video kamera belakang (WebM bila peramban tak
+                           bisa MP4)
+     <nama>/jejak.gpx      tiap posisi GPS sejak mulai merekam, waktu UTC ms
+     <nama>/sensor.csv     waktu_ms,ax,ay,az,gx,gy,gz — epoch ms, percepatan
+                           termasuk gravitasi (m/s², konvensi Android:
+                           diam telentang az = +9,8), giroskop rad/s
+     <nama>/metadata.json  kunci sama dengan PaveRec-ITS 2.0
+   Video, GPS, dan sensor memakai satu jam: performance.timeOrigin + cap
+   waktu peristiwa peramban.
+   ===================================================================== */
+
+const VERSI = "2.0-web.1";
+const SENSOR_HEADER = "waktu_ms,ax,ay,az,gx,gy,gz\n";
+const PENUTUP_GPX = "    </trkseg>\n  </trk>\n</gpx>\n";
+const BATAS_VIDEO = 3.8e9;          // di bawah 4 GB agar zip tanpa Zip64
+const LAMA_KALIBRASI_MS = 10000;
+const $ = (id) => document.getElementById(id);
+
+const UA = navigator.userAgent;
+const IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const ANDROID = /Android/i.test(UA);
+
+/* ------------------------------------------------------------ jam */
+function sekarang() { return performance.timeOrigin + performance.now(); }
+function epochPeristiwa(e) {
+  const t = e.timeStamp;
+  if (!t) return sekarang();
+  return t > 1e12 ? t : performance.timeOrigin + t;      // peramban lama: timeStamp sudah epoch
+}
+function isoUtc(ms) { return new Date(Math.round(ms)).toISOString(); }
+function namaSesi(ms, jenis, ruas) {
+  const d = new Date(ms), p = (n) => String(n).padStart(2, "0");
+  const stem = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-${jenis}`;
+  const r = (ruas || "").normalize("NFKD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^A-Za-z0-9.\-]+/g, "_").replace(/^[_.]+|[_.]+$/g, "").slice(0, 40);
+  return r ? `${stem}-${r}` : stem;
+}
+
+/* ------------------------------------------------------------ hitungan */
+function haversineM(a1, o1, a2, o2) {
+  const R = 6371008.8, r = Math.PI / 180;
+  const p1 = a1 * r, p2 = a2 * r, dp = p2 - p1, dl = (o2 - o1) * r;
+  const a = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(Math.min(1, Math.max(0, a))));
+}
+function median(a) {
+  const b = a.filter((x) => Number.isFinite(x)).sort((x, y) => x - y);
+  if (!b.length) return null;
+  const m = b.length >> 1;
+  return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2;
+}
+function bulat(v, d) { if (v == null || !Number.isFinite(v)) return null; const f = 10 ** d; return Math.round(v * f) / f; }
+/** Sudut tunduk (°, + = menunduk ke jalan), sama dengan `sudut_tunduk_sensor` PaveScanPro-ITS. */
+function tunduk(ax, ay, az) {
+  const n = Math.hypot(ax, ay, az);
+  if (n < 5 || n > 15) return NaN;
+  return Math.asin(Math.max(-1, Math.min(1, az / n))) * 180 / Math.PI;
+}
+/** Kemiringan cakrawala gambar (°) untuk putaran layar 0/90/180/270. */
+function miring(ax, ay, az, putaran) {
+  const n = Math.hypot(ax, ay, az);
+  if (n < 5 || n > 15) return NaN;
+  const q = ((putaran % 360) + 360) % 360;
+  const r = q === 90 ? Math.atan2(ay, ax) : q === 270 ? Math.atan2(-ay, -ax)
+          : q === 180 ? Math.atan2(ax, -ay) : Math.atan2(-ax, ay);
+  return r * 180 / Math.PI;
+}
+function hfovSisiPendek(hfovPanjang, panjang, pendek) {
+  return 2 * Math.atan(Math.tan(hfovPanjang * Math.PI / 360) * pendek / panjang) * 180 / Math.PI;
+}
+function putaranLayar() {
+  if (screen.orientation && Number.isFinite(screen.orientation.angle)) return screen.orientation.angle;
+  if (typeof window.orientation === "number") return (window.orientation + 360) % 360;
+  return 0;
+}
+function teksUkuran(b) {
+  if (b >= 1e9) return (b / 1e9).toFixed(2).replace(".", ",") + " GB";
+  if (b >= 1e6) return (b / 1e6).toFixed(1).replace(".", ",") + " MB";
+  return Math.max(1, Math.round(b / 1e3)) + " kB";
+}
+function teksLama(s) { s = Math.max(0, Math.round(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }
+function xmlAman(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function angka(v, d) { return String(bulat(v, d)); }
+
+/* ------------------------------------------------------------ IndexedDB
+   sesi     {id, nama, mime, ext, meta, putaran, tanda, dibuat, selesai}
+   potongan {id, jenis: v|s|g, n, data, t}   v = Blob video, s = baris CSV, g = trkpt */
+const DB = {
+  db: null,
+  buka() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open("paverec-web", 1);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        d.createObjectStore("sesi", { keyPath: "id" });
+        d.createObjectStore("potongan", { keyPath: ["id", "jenis", "n"] });
+      };
+      r.onsuccess = () => { DB.db = r.result; res(); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  _tx(stores, mode, kerja) {
+    return new Promise((res, rej) => {
+      const t = DB.db.transaction(stores, mode);
+      let hasil;
+      const r = kerja(t);
+      if (r) r.onsuccess = () => { hasil = r.result; };
+      t.oncomplete = () => res(hasil);
+      t.onerror = () => rej(t.error);
+      t.onabort = () => rej(t.error || new Error("transaksi dibatalkan"));
+    });
+  },
+  taruh(store, v) { return DB._tx(store, "readwrite", (t) => t.objectStore(store).put(v)); },
+  ambil(store, k) { return DB._tx(store, "readonly", (t) => t.objectStore(store).get(k)); },
+  semua(store) { return DB._tx(store, "readonly", (t) => t.objectStore(store).getAll()); },
+  potongan(id, jenis) {
+    return DB._tx("potongan", "readonly", (t) =>
+      t.objectStore("potongan").getAll(IDBKeyRange.bound([id, jenis, 0], [id, jenis, Infinity])));
+  },
+  hapus(id) {
+    return DB._tx(["sesi", "potongan"], "readwrite", (t) => {
+      t.objectStore("sesi").delete(id);
+      t.objectStore("potongan").delete(IDBKeyRange.bound([id, "", 0], [id, "￿", Infinity]));
+    });
+  },
+};
+
+/* ------------------------------------------------------------ keadaan */
+const K = {
+  aliran: null, perekam: null, sesi: null, wakeLock: null,
+  gpsId: null, posAkhir: null, waktuPosAkhir: 0,
+  // sensor
+  aAkhir: null, gx: 0, gy: 0, gz: 0, adaGiro: false, orient: null,
+  hitungSensor: 0, tSensor0: 0, hzTampil: null, jendelaHz: [],
+  tanda: IOS ? -1 : 1, caraTanda: IOS ? "bawaan iOS (dibalik)" : "bawaan (konvensi W3C/Android)",
+  suaraTanda: 0, tandaPasti: false,
+  hTunduk: NaN, hMiring: NaN,
+  // rekam
+  merekam: false, mulaiMs: 0, nV: 0, nS: 0, nG: 0, bufS: [], bufG: [], tunda: new Set(),
+  bytesVideo: 0, titik: 0, jarak: 0, latA: NaN, lonA: NaN, tGpsA: 0, catatan: [],
+  pemicuBanner: null, pemicuHud: null, pemicuSimpan: null, berhentiOtomatis: null,
+};
+
+/* ------------------------------------------------------------ pilihan format video */
+function pilihMime() {
+  if (typeof MediaRecorder === "undefined") return null;
+  const calon = ["video/mp4;codecs=avc1.640028", "video/mp4;codecs=avc1.4d002a", "video/mp4;codecs=avc1",
+    "video/mp4", "video/webm;codecs=h264", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
+  for (const m of calon) { try { if (MediaRecorder.isTypeSupported(m)) return m; } catch (_) {} }
+  return "";
+}
+
+/* ------------------------------------------------------------ sensor */
+function diSensor(e) {
+  const g = e.accelerationIncludingGravity;
+  if (!g || g.x == null) return;
+  const t = epochPeristiwa(e);
+  const r = e.rotationRate;
+  if (r && r.alpha != null) {
+    const d = Math.PI / 180;            // devicemotion memberi °/s: beta = sumbu x, gamma = y, alpha = z
+    K.gx = r.beta * d; K.gy = r.gamma * d; K.gz = r.alpha * d; K.adaGiro = true;
+  }
+  // tentukan tanda sumbu dari arah gravitasi yang diharapkan menurut deviceorientation
+  if (!K.tandaPasti && K.orient) {
+    const b = K.orient.beta * Math.PI / 180, c = K.orient.gamma * Math.PI / 180;
+    const ux = -Math.cos(b) * Math.sin(c), uy = Math.sin(b), uz = Math.cos(b) * Math.cos(c);
+    const n = Math.hypot(g.x, g.y, g.z);
+    if (n > 5 && n < 15) {
+      const dot = (g.x * ux + g.y * uy + g.z * uz) / n;
+      if (Math.abs(dot) > 0.5) K.suaraTanda += dot > 0 ? 1 : -1;
+      if (Math.abs(K.suaraTanda) >= 25) {
+        K.tanda = K.suaraTanda > 0 ? 1 : -1; K.tandaPasti = true;
+        K.caraTanda = "dari arah gravitasi menurut deviceorientation" + (K.tanda < 0 ? " (dibalik)" : "");
+      }
+    }
+  }
+  const s = K.tanda, ax = g.x * s, ay = g.y * s, az = g.z * s;
+  K.aAkhir = { ax, ay, az };
+  const tu = tunduk(ax, ay, az), mi = miring(ax, ay, az, putaranLayar());
+  if (Number.isFinite(tu)) K.hTunduk = Number.isFinite(K.hTunduk) ? K.hTunduk + 0.08 * (tu - K.hTunduk) : tu;
+  if (Number.isFinite(mi)) K.hMiring = Number.isFinite(K.hMiring) ? K.hMiring + 0.08 * (mi - K.hMiring) : mi;
+  K.jendelaHz.push(t); while (K.jendelaHz.length && t - K.jendelaHz[0] > 2000) K.jendelaHz.shift();
+  if (K.merekam && K.tandaTerkunci) {
+    K.bufS.push(`${Math.round(t)},${angka(ax, 4)},${angka(ay, 4)},${angka(az, 4)},${angka(K.gx, 5)},${angka(K.gy, 5)},${angka(K.gz, 5)}\n`);
+    K.hitungSensor++;
+  }
+}
+function diOrientasi(e) { if (e.beta != null && e.gamma != null) K.orient = { beta: e.beta, gamma: e.gamma }; }
+
+/* ------------------------------------------------------------ GPS */
+function diPosisi(p) {
+  const kini = sekarang();
+  let t = p.timestamp;
+  if (!Number.isFinite(t) || Math.abs(t - Date.now()) > 5000) t = kini;
+  K.posAkhir = p; K.waktuPosAkhir = kini;
+  if (!K.merekam) return;
+  if (t <= K.tGpsA) return;                       // titik ganda
+  K.tGpsA = t;
+  const c = p.coords;
+  let x = `      <trkpt lat="${c.latitude.toFixed(8)}" lon="${c.longitude.toFixed(8)}">\n`;
+  if (c.altitude != null && Number.isFinite(c.altitude)) x += `        <ele>${c.altitude.toFixed(1)}</ele>\n`;
+  x += `        <time>${isoUtc(t)}</time>\n`;
+  if (c.speed != null && Number.isFinite(c.speed)) x += `        <speed>${c.speed.toFixed(2)}</speed>\n`;
+  const akr = Number.isFinite(c.accuracy), arah = c.heading != null && Number.isFinite(c.heading);
+  if (akr || arah) {
+    x += "        <extensions>";
+    if (akr) x += `<pr:akurasi_m>${c.accuracy.toFixed(1)}</pr:akurasi_m>`;
+    if (arah) x += `<pr:arah_derajat>${c.heading.toFixed(1)}</pr:arah_derajat>`;
+    x += "</extensions>\n";
+  }
+  x += "      </trkpt>\n";
+  K.bufG.push(x);
+  if (Number.isFinite(K.latA)) K.jarak += haversineM(K.latA, K.lonA, c.latitude, c.longitude);
+  K.latA = c.latitude; K.lonA = c.longitude; K.titik++;
+}
+function galatPosisi(e) {
+  if (e.code === 1) tampilPesan("Izin lokasi ditolak. Video dan getaran tetap terekam, tetapi tanpa jejak GPS.", 6000);
+}
+
+/* ------------------------------------------------------------ kamera */
+async function bukaAliran() {
+  const idKam = $("kamera").value;
+  const video = {
+    width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 },
+    ...(idKam ? { deviceId: { exact: idKam } } : { facingMode: { ideal: "environment" } }),
+  };
+  if (K.aliran) K.aliran.getTracks().forEach((t) => t.stop());
+  K.aliran = await navigator.mediaDevices.getUserMedia({ video, audio: false });
+  const trek = K.aliran.getVideoTracks()[0];
+  try {                                            // zoom 1× bila peramban mengizinkan
+    const cap = trek.getCapabilities ? trek.getCapabilities() : {};
+    if (cap.zoom) await trek.applyConstraints({ advanced: [{ zoom: Math.max(cap.zoom.min, Math.min(cap.zoom.max, 1)) }] });
+  } catch (_) {}
+  trek.addEventListener("ended", () => {
+    if (K.merekam) { K.catatan.push("aliran kamera terputus (layar terkunci / aplikasi lain memakai kamera)"); hentiRekam(); }
+  });
+  const v = $("pratinjau");
+  v.srcObject = K.aliran;
+  await v.play().catch(() => {});
+  await daftarKamera();
+}
+async function daftarKamera() {
+  try {
+    const sel = $("kamera"), pilihan = sel.value;
+    const kam = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput");
+    sel.innerHTML = '<option value="">(otomatis — kamera utama)</option>';
+    kam.forEach((d, i) => {
+      const o = document.createElement("option");
+      o.value = d.deviceId; o.textContent = d.label || `Kamera ${i + 1}`;
+      sel.appendChild(o);
+    });
+    sel.value = pilihan;
+  } catch (_) {}
+}
+
+async function kunciLayar() {
+  try { if ("wakeLock" in navigator) K.wakeLock = await navigator.wakeLock.request("screen"); } catch (_) {}
+}
+
+/* ------------------------------------------------------------ buka layar kamera */
+async function siapkan() {
+  // iOS: izin gerak HARUS diminta langsung di dalam ketukan, sebelum await lain
+  const mintaGerak = typeof DeviceMotionEvent !== "undefined" && DeviceMotionEvent.requestPermission
+    ? DeviceMotionEvent.requestPermission().catch(() => "denied") : Promise.resolve("granted");
+  const mintaOrient = typeof DeviceOrientationEvent !== "undefined" && DeviceOrientationEvent.requestPermission
+    ? DeviceOrientationEvent.requestPermission().catch(() => "denied") : Promise.resolve("granted");
+  if (ANDROID && document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen({ navigationUI: "hide" })
+      .then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock("landscape"))
+      .catch(() => {});
+  }
+  const hfov = parseFloat(String($("hfov").value).replace(",", "."));
+  try { localStorage.setItem("paverec.hfov", Number.isFinite(hfov) ? String(hfov) : "");
+        localStorage.setItem("paverec.surveyor", $("surveyor").value); } catch (_) {}
+
+  $("layarRekam").classList.remove("tersembunyi");
+  $("btnRekam").disabled = true;
+  tampilPesan("Membuka kamera…");
+  const [gerak] = await Promise.all([mintaGerak, mintaOrient]);
+  K.izinGerak = gerak;
+  window.addEventListener("devicemotion", diSensor);
+  window.addEventListener("deviceorientation", diOrientasi);
+  if ("geolocation" in navigator && K.gpsId == null)
+    K.gpsId = navigator.geolocation.watchPosition(diPosisi, galatPosisi, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+  try {
+    await bukaAliran();
+  } catch (e) {
+    tampilPesan("Kamera tidak dapat dibuka: " + (e.message || e.name) + ". Periksa izin kamera untuk situs ini.", 0);
+    return;
+  }
+  await kunciLayar();
+  sembunyiPesan();
+  $("btnRekam").disabled = false;
+  $("btnRekam").classList.remove("henti");
+  $("hudWaktu").textContent = jenisDipilih() === "kalibrasi" ? "Kalibrasi — siap" : "Siap";
+  $("hudWaktu").className = "lencana";
+  clearInterval(K.pemicuHud); K.pemicuHud = setInterval(perbaruiHud, 250);
+  clearInterval(K.pemicuBanner);
+  $("hudBanner").classList.toggle("tersembunyi", jenisDipilih() !== "kalibrasi");
+  if (jenisDipilih() === "kalibrasi") K.pemicuBanner = setInterval(hitungKotakMerah, 400);
+}
+
+async function tutupKamera() {
+  if (K.merekam) {
+    if (!confirm("Rekaman sedang berjalan. Hentikan dan simpan?")) return;
+    await hentiRekam();
+  }
+  clearInterval(K.pemicuHud); clearInterval(K.pemicuBanner);
+  if (K.aliran) K.aliran.getTracks().forEach((t) => t.stop());
+  K.aliran = null;
+  if (K.gpsId != null) navigator.geolocation.clearWatch(K.gpsId);
+  K.gpsId = null;
+  window.removeEventListener("devicemotion", diSensor);
+  window.removeEventListener("deviceorientation", diOrientasi);
+  try { if (K.wakeLock) await K.wakeLock.release(); } catch (_) {}
+  K.wakeLock = null;
+  try { if (document.fullscreenElement) await document.exitFullscreen(); } catch (_) {}
+  $("layarRekam").classList.add("tersembunyi");
+}
+
+function jenisDipilih() { return document.querySelector('input[name="jenis"]:checked').value; }
+
+/* ------------------------------------------------------------ rekam */
+async function mulaiRekam() {
+  const mime = pilihMime();
+  if (mime === null) { tampilPesan("Peramban ini tidak dapat merekam video (MediaRecorder tidak ada). Pakai Chrome Android atau Safari iOS 14.3+.", 0); return; }
+  try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (_) {}
+  const extDari = (m) => (/mp4/i.test(m) ? "mp4" : /webm/i.test(m) ? "webm" : IOS ? "mp4" : "webm");
+  const ext = extDari(mime);
+  const v = $("pratinjau");
+  const trek = K.aliran.getVideoTracks()[0];
+  const st = trek.getSettings ? trek.getSettings() : {};
+  const lebar = v.videoWidth || st.width || 0, tinggi = v.videoHeight || st.height || 0;
+  const perekam = new MediaRecorder(K.aliran, {
+    ...(mime ? { mimeType: mime } : {}),
+    videoBitsPerSecond: Math.max(lebar, tinggi) >= 1900 ? 10_000_000 : 6_000_000,
+    // bingkai kunci tiap 1 s: Chrome baru menulis potongan MP4 di batas bingkai kunci,
+    // tanpa ini seluruh video tertahan di memori sampai rekaman dihentikan
+    videoKeyFrameIntervalDuration: 1000,
+  });
+  const dibuat = Date.now();
+  const id = "s" + dibuat.toString(36) + Math.random().toString(36).slice(2, 6);
+  const jenis = jenisDipilih(), ruas = $("ruas").value.trim();
+  const hfov = parseFloat(String($("hfov").value).replace(",", "."));
+  K.sesi = {
+    id, nama: namaSesi(dibuat, jenis, ruas), mime: perekam.mimeType || mime || "", ext,
+    putaran: putaranLayar(), tanda: K.tanda, caraTanda: K.caraTanda, dibuat, selesai: false,
+    meta: {
+      jenis, ruas, surveyor: $("surveyor").value.trim(), kendaraan: $("kendaraan").value.trim(),
+      catatan: $("catatanSesi").value.trim(),
+      kamera: {
+        lebar, tinggi, fps: st.frameRate || null, hfov: Number.isFinite(hfov) ? hfov : null,
+        zoom: st.zoom ?? null, label: trek.label || "", deviceId: st.deviceId || "",
+        bitrate: perekam.videoBitsPerSecond || null,
+      },
+      waktu: { mulai_epoch_ms: null, selesai_epoch_ms: null },
+    },
+  };
+  Object.assign(K, { nV: 0, nS: 0, nG: 0, bufS: [], bufG: [], bytesVideo: 0, titik: 0, jarak: 0,
+    latA: NaN, lonA: NaN, tGpsA: 0, hitungSensor: 0, catatan: [] });
+  K.tandaTerkunci = true;          // tanda sumbu tidak berubah lagi selama sesi
+  K.tandaPasti = true;
+  K.sesi.tanda = K.tanda; K.sesi.caraTanda = K.caraTanda;
+  await DB.taruh("sesi", K.sesi);
+
+  perekam.ondataavailable = (e) => {
+    if (!e.data || !e.data.size) return;
+    const n = K.nV++;
+    K.bytesVideo += e.data.size;
+    simpanTunda(DB.taruh("potongan", { id, jenis: "v", n, data: e.data, t: sekarang() }));
+    if (K.bytesVideo > BATAS_VIDEO && K.merekam) {
+      K.catatan.push("dihentikan otomatis: video mendekati 4 GB");
+      tampilPesan("Video mendekati 4 GB — rekaman dihentikan. Mulai sesi baru untuk melanjutkan.", 6000);
+      hentiRekam();
+    }
+  };
+  perekam.onerror = (e) => { K.catatan.push("galat perekam: " + ((e.error && e.error.message) || "tak diketahui")); hentiRekam(); };
+  const mulai = new Promise((res) => { perekam.onstart = (e) => res(epochPeristiwa(e)); });
+  K.perekam = perekam;
+  K.merekam = true;
+  // posisi terakhir yang masih segar ikut dicatat, agar jejak tidak kosong saat kendaraan diam
+  if (K.posAkhir && sekarang() - K.waktuPosAkhir < 3000) diPosisi(K.posAkhir);
+  const tPanggil = sekarang();
+  perekam.start(1000);
+  K.mulaiMs = await Promise.race([mulai, new Promise((r) => setTimeout(() => r(tPanggil), 1500))]);
+  K.sesi.meta.waktu.mulai_epoch_ms = Math.round(K.mulaiMs);
+  K.sesi.meta.waktu.metode_mulai = "peristiwa start MediaRecorder (perkiraan frame pertama, ±0,1 s)";
+  if (perekam.mimeType) { K.sesi.mime = perekam.mimeType; K.sesi.ext = extDari(perekam.mimeType); }
+  await DB.taruh("sesi", K.sesi);
+  clearInterval(K.pemicuSimpan); K.pemicuSimpan = setInterval(siramBuffer, 2000);
+  $("btnRekam").classList.add("henti");
+  $("btnTutup").disabled = true;
+  if (jenis === "kalibrasi") K.berhentiOtomatis = setTimeout(hentiRekam, LAMA_KALIBRASI_MS);
+  else setTimeout(() => {
+    if (K.merekam && K.sesi && K.sesi.id === id && K.bytesVideo < 20000) {
+      K.catatan.push("peramban menahan video di memori sampai rekaman dihentikan");
+      tampilPesan("Peramban ini menahan video di memori. Rekam ruas pendek (≤ 5 menit per sesi) dan jangan tutup halaman sebelum menekan henti.", 8000);
+    }
+  }, 6000);
+}
+
+function simpanTunda(p) {
+  K.tunda.add(p);
+  p.catch((e) => { K.catatan.push("gagal menyimpan: " + (e && e.message)); tampilPesan("Penyimpanan HP penuh atau ditolak peramban: " + (e && e.message), 0); })
+   .finally(() => K.tunda.delete(p));
+}
+function siramBuffer() {
+  if (!K.sesi) return;
+  const id = K.sesi.id;
+  if (K.bufS.length) { const d = K.bufS.join(""); K.bufS = []; simpanTunda(DB.taruh("potongan", { id, jenis: "s", n: K.nS++, data: d, t: sekarang() })); }
+  if (K.bufG.length) { const d = K.bufG.join(""); K.bufG = []; simpanTunda(DB.taruh("potongan", { id, jenis: "g", n: K.nG++, data: d, t: sekarang() })); }
+}
+
+let sedangHenti = null;
+function hentiRekam() {
+  if (sedangHenti) return sedangHenti;
+  if (!K.merekam || !K.perekam) return Promise.resolve();
+  sedangHenti = (async () => {
+    clearTimeout(K.berhentiOtomatis);
+    const p = K.perekam;
+    const berhenti = new Promise((res) => { p.onstop = () => res(); });
+    const tHenti = sekarang();
+    try { if (p.state !== "inactive") p.stop(); } catch (_) {}
+    await Promise.race([berhenti, new Promise((r) => setTimeout(r, 4000))]);
+    await new Promise((r) => setTimeout(r, 50));          // dataavailable terakhir
+    K.merekam = false; K.tandaTerkunci = false;
+    clearInterval(K.pemicuSimpan);
+    siramBuffer();
+    await Promise.allSettled([...K.tunda]);
+    if (!K.hitungSensor) K.catatan.push("tidak ada data getaran (izin gerak: " + (K.izinGerak || "?") + ", atau sensor tidak tersedia)");
+    K.sesi.meta.waktu.selesai_epoch_ms = Math.round(tHenti);
+    K.sesi.selesai = true;
+    K.sesi.catatanRekam = K.catatan.slice();
+    await DB.taruh("sesi", K.sesi);
+    const ringkas = `Tersimpan: ${teksLama((tHenti - K.mulaiMs) / 1000)} · ${K.titik} titik GPS · ${teksUkuran(K.bytesVideo)}`;
+    K.perekam = null; K.sesi = null;
+    $("btnRekam").classList.remove("henti");
+    $("btnTutup").disabled = false;
+    $("hudWaktu").textContent = "Siap"; $("hudWaktu").className = "lencana";
+    tampilPesan(ringkas + "\nBuka tab Sesi untuk mengirim.", 5000);
+    muatSesi();
+  })().finally(() => { sedangHenti = null; });
+  return sedangHenti;
+}
+
+/* ------------------------------------------------------------ tampilan saat merekam */
+function kelasAkurasi(m) { return m <= 5 ? "baik" : m <= 15 ? "sedang" : "buruk"; }
+function perbaruiHud() {
+  const kini = sekarang();
+  const w = $("hudWaktu");
+  if (K.merekam) { w.textContent = "● " + teksLama((kini - K.mulaiMs) / 1000); w.className = "lencana rec"; }
+  const g = $("hudGps"), p = K.posAkhir;
+  if (!p) { g.textContent = "GPS mencari…"; g.className = "lencana buruk"; }
+  else {
+    const umur = (kini - K.waktuPosAkhir) / 1000, a = p.coords.accuracy;
+    g.textContent = umur > 5 ? `GPS hilang ${Math.round(umur)} s` : `GPS ±${Math.round(a)} m`;
+    g.className = "lencana " + (umur > 5 ? "buruk" : kelasAkurasi(a));
+    const v = p.coords.speed;
+    $("hudLaju").textContent = v != null && Number.isFinite(v) ? `${Math.round(v * 3.6)} km/j` : "— km/j";
+  }
+  $("hudJarak").textContent = (K.jarak / 1000).toFixed(2).replace(".", ",") + " km" + (K.merekam ? ` · ${K.titik} titik` : "");
+  const j = K.jendelaHz, hz = j.length > 2 ? (j.length - 1) / ((j[j.length - 1] - j[0]) / 1000) : 0;
+  const s = $("hudSensor");
+  s.textContent = hz ? `Getaran ${Math.round(hz)} Hz` : "Getaran: tidak ada";
+  s.className = "lencana " + (hz >= 50 ? "baik" : hz >= 20 ? "sedang" : "buruk");
+  const v = $("pratinjau");
+  $("hudVideo").textContent = v.videoWidth ? `${v.videoWidth}×${v.videoHeight}` + (K.merekam ? ` · ${teksUkuran(K.bytesVideo)}` : "") : "";
+  if (v.videoWidth && v.videoHeight > v.videoWidth && !K.merekam) $("hudVideo").textContent += " · putar HP mendatar";
+  const tu = K.hTunduk, mi = K.hMiring;
+  $("teksTunduk").textContent = Number.isFinite(tu) ? `tunduk ${tu.toFixed(1)}°` : "tunduk —";
+  $("teksMiring").textContent = Number.isFinite(mi) ? `miring ${mi.toFixed(1)}°` : "miring —";
+  const gm = $("garisMiring");
+  gm.setAttribute("transform", `rotate(${Number.isFinite(mi) ? -mi : 0})`);
+  gm.firstElementChild.setAttribute("stroke", !Number.isFinite(mi) ? "#999" : Math.abs(mi) <= 3 ? "#9be79f" : "#ff8a80");
+}
+
+/* Bantuan mode kalibrasi: hitung bidang merah (kotak banner) pada pratinjau kecil. */
+const kanvasKecil = document.createElement("canvas");
+function hitungKotakMerah() {
+  const v = $("pratinjau");
+  if (!v.videoWidth) return;
+  const W = 160, H = Math.max(1, Math.round(160 * v.videoHeight / v.videoWidth));
+  kanvasKecil.width = W; kanvasKecil.height = H;
+  const c = kanvasKecil.getContext("2d", { willReadFrequently: true });
+  c.drawImage(v, 0, 0, W, H);
+  const d = c.getImageData(0, 0, W, H).data, m = new Uint8Array(W * H);
+  for (let i = 0, k = 0; k < m.length; i += 4, k++) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    m[k] = r > 110 && r > 1.6 * g && r > 1.6 * b ? 1 : 0;
+  }
+  let bidang = 0, terpotong = false;
+  const tumpuk = [];
+  for (let k = 0; k < m.length; k++) {
+    if (m[k] !== 1) continue;
+    let luas = 0, sentuhTepi = false; m[k] = 2; tumpuk.push(k);
+    while (tumpuk.length) {
+      const q = tumpuk.pop(), x = q % W, y = (q / W) | 0; luas++;
+      if (x === 0 || y === 0 || x === W - 1 || y === H - 1) sentuhTepi = true;
+      const tetangga = [x > 0 ? q - 1 : -1, x < W - 1 ? q + 1 : -1, y > 0 ? q - W : -1, y < H - 1 ? q + W : -1];
+      for (const t of tetangga) if (t >= 0 && m[t] === 1) { m[t] = 2; tumpuk.push(t); }
+    }
+    if (luas >= 4) { bidang++; if (sentuhTepi) terpotong = true; }
+  }
+  const el = $("hudBanner");
+  el.textContent = bidang === 0 ? "Banner: arahkan ke kotak merah"
+    : terpotong ? `Banner: ${bidang} kotak, ada yang terpotong tepi`
+    : bidang === 6 ? "Banner: 6 kotak terlihat ✓" : `Banner: ${bidang} kotak (perlu 6)`;
+  el.className = "lencana " + (bidang === 6 && !terpotong ? "baik" : bidang ? "sedang" : "buruk");
+}
+
+let pemicuPesan = null;
+function tampilPesan(t, lama = 3000) {
+  const el = $("pesanRekam");
+  el.textContent = t; el.style.whiteSpace = "pre-line";
+  el.classList.remove("tersembunyi");
+  clearTimeout(pemicuPesan);
+  if (lama) pemicuPesan = setTimeout(sembunyiPesan, lama);
+  if ($("layarRekam").classList.contains("tersembunyi")) alert(t);
+}
+function sembunyiPesan() { $("pesanRekam").classList.add("tersembunyi"); }
+
+/* ------------------------------------------------------------ susun isi sesi */
+async function infoPerangkat() {
+  const p = { pabrik: null, model: null, android: null, sistem: null, peramban: UA };
+  try {
+    if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+      const h = await navigator.userAgentData.getHighEntropyValues(["model", "platform", "platformVersion"]);
+      p.model = h.model || null; p.sistem = [h.platform, h.platformVersion].filter(Boolean).join(" ") || null;
+      if (h.platform === "Android") p.android = h.platformVersion || null;
+    }
+  } catch (_) {}
+  if (IOS) {
+    p.pabrik = "Apple"; p.model = p.model || (/iPad/.test(UA) ? "iPad" : "iPhone");
+    const m = UA.match(/OS (\d+)_(\d+)(?:_(\d+))?/); if (m) p.sistem = "iOS " + m.slice(1).filter(Boolean).join(".");
+  } else if (ANDROID && !p.android) {
+    const m = UA.match(/Android ([\d.]+)/); if (m) { p.android = m[1]; p.sistem = p.sistem || "Android " + m[1]; }
+  }
+  return p;
+}
+
+/** Hitung ulang semua ringkasan dari data tersimpan, sehingga sesi yang terputus pun lengkap. */
+async function susunSesi(s) {
+  const pv = await DB.potongan(s.id, "v"), ps = await DB.potongan(s.id, "s"), pg = await DB.potongan(s.id, "g");
+  const video = new Blob(pv.map((p) => p.data), { type: (s.mime || "video/mp4").split(";")[0] });
+  const sensorTeks = ps.map((p) => p.data).join("");
+  const gpxIsi = pg.map((p) => p.data).join("");
+  const m = s.meta, k = m.kamera;
+
+  // GPS
+  let titik = 0, jarak = 0, la = NaN, lo = NaN; const akr = [], tg = [];
+  for (const pt of gpxIsi.split("</trkpt>")) {
+    const x = pt.match(/lat="([-\d.]+)" lon="([-\d.]+)"/);
+    if (!x) continue;
+    const a = +x[1], o = +x[2], w = pt.match(/<time>([^<]+)<\/time>/), k = pt.match(/<pr:akurasi_m>([\d.]+)</);
+    if (Number.isFinite(la)) jarak += haversineM(la, lo, a, o);
+    la = a; lo = o; titik++;
+    if (w) tg.push(Date.parse(w[1]));
+    if (k) akr.push(+k[1]);
+  }
+  // sensor
+  const baris = sensorTeks.split("\n").filter(Boolean);
+  let t0 = null, t1 = null; const tu = [], mi = [];
+  baris.forEach((b, i) => {
+    const f = b.split(","); const t = +f[0];
+    if (t0 === null) t0 = t; t1 = t;
+    if (i % 5 === 0) {
+      const ax = +f[1], ay = +f[2], az = +f[3];
+      tu.push(tunduk(ax, ay, az)); mi.push(miring(ax, ay, az, s.putaran || 0));
+    }
+  });
+  const hz = baris.length > 1 && t1 > t0 ? (baris.length - 1) / ((t1 - t0) / 1000) : null;
+  const adaGiro = baris.some((b) => { const f = b.split(","); return +f[4] !== 0 || +f[5] !== 0 || +f[6] !== 0; });
+
+  const mulai = m.waktu.mulai_epoch_ms ?? (pv.length ? Math.round(pv[0].t - 1000) : s.dibuat);
+  const selesai = m.waktu.selesai_epoch_ms ?? (pv.length ? Math.round(pv[pv.length - 1].t) : mulai);
+  const lebar = k.lebar, tinggi = k.tinggi;
+  const potret = tinggi > lebar;
+  const hfovM = k.hfov == null ? null : potret ? hfovSisiPendek(k.hfov, tinggi, lebar) : k.hfov;
+  const off = -new Date(mulai).getTimezoneOffset();
+  const catatanRekam = (s.catatanRekam || []).slice();
+  if (!s.selesai) catatanRekam.push("rekaman terputus (halaman ditutup / HP mati); video berakhir pada potongan terakhir yang sempat tersimpan");
+  if (s.ext !== "mp4") catatanRekam.push(`peramban merekam ${s.mime || "WebM"}; disimpan sebagai video.${s.ext}`);
+
+  const metadata = {
+    aplikasi: "PaveRec-ITS", versi: VERSI, jenis: m.jenis, ruas: m.ruas, surveyor: m.surveyor, catatan: m.catatan,
+    kendaraan: m.kendaraan,
+    platform: "web",
+    perangkat: await infoPerangkat(),
+    kamera: {
+      lebar, tinggi, fps: bulat(k.fps, 3), orientasi: potret ? "potret" : "mendatar",
+      putaran_derajat: 0,
+      hfov_derajat: k.hfov, hfov_mendatar_derajat: bulat(hfovM, 2), panjang_fokus_mm: null,
+      stabilisasi: null, ois: null, zoom: k.zoom, kamera_id: k.label || k.deviceId || null,
+      format_video: s.mime || null, bitrate_bps: k.bitrate,
+      catatan_hfov: k.hfov == null
+        ? "tidak diketahui (peramban tidak memberi spesifikasi lensa); tentukan dengan banner target"
+        : "diisi surveyor; harus diperiksa dengan banner target",
+      catatan_video: "video sudah tegak sesuai tampilan (tanpa matriks putar); laju bingkai dapat bervariasi; stabilisasi tidak dapat diatur dari peramban",
+    },
+    waktu: {
+      mulai_epoch_ms: mulai, selesai_epoch_ms: selesai, lama_detik: bulat((selesai - mulai) / 1000, 3),
+      zona: Intl.DateTimeFormat().resolvedOptions().timeZone || null, offset_menit: off,
+      sumber_jam: "performance.timeOrigin + cap waktu peristiwa peramban (video, GPS, dan sensor pada jam yang sama)",
+      metode_mulai: m.waktu.metode_mulai || "taksiran dari potongan video pertama",
+    },
+    gps: {
+      titik, jarak_m: bulat(jarak, 1), akurasi_median_m: bulat(median(akr), 1),
+      titik_pertama_detik: tg.length ? bulat((tg[0] - mulai) / 1000, 3) : null,
+      selisih_jam_gnss_ms: null,
+    },
+    sensor: {
+      cuplikan: baris.length, hz: bulat(hz, 3), satuan: "m/s^2", giroskop: adaGiro, satuan_giroskop: "rad/s",
+      sumber: "devicemotion.accelerationIncludingGravity",
+      tanda_dibalik: s.tanda < 0, cara_tanda: s.caraTanda || null,
+    },
+    pemasangan: {
+      sudut_tunduk_derajat: bulat(median(tu), 2), miring_derajat: bulat(median(mi), 2),
+      putaran_layar_derajat: s.putaran || 0,
+      sumber: "arah gravitasi akselerometer, median selama merekam",
+    },
+    status: { selesai: !!s.selesai, catatan: catatanRekam },
+  };
+  const namaJejak = m.ruas || s.nama;
+  const gpx = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<gpx version="1.1" creator="PaveRec-ITS" xmlns="http://www.topografix.com/GPX/1/1" xmlns:pr="urn:its:paverec">\n' +
+    `  <trk>\n    <name>${xmlAman(namaJejak)}</name>\n    <trkseg>\n` + gpxIsi + PENUTUP_GPX;
+  return {
+    berkas: [
+      ["metadata.json", JSON.stringify(metadata, null, 2) + "\n"],
+      ["jejak.gpx", gpx],
+      ["sensor.csv", SENSOR_HEADER + sensorTeks],
+      ["video." + (s.ext || "mp4"), video],
+    ],
+    metadata, ukuranVideo: video.size,
+  };
+}
+
+/* ------------------------------------------------------------ zip (simpan, tanpa kompresi) */
+const TABEL_CRC = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crcTambah(crc, u8) {
+  let c = crc ^ 0xffffffff;
+  for (let i = 0; i < u8.length; i++) c = TABEL_CRC[(c ^ u8[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+async function crcBlob(blob, kemajuan) {
+  let crc = 0, dibaca = 0;
+  const POT = 8 * 1024 * 1024;
+  for (let i = 0; i < blob.size; i += POT) {
+    const u8 = new Uint8Array(await blob.slice(i, Math.min(blob.size, i + POT)).arrayBuffer());
+    crc = crcTambah(crc, u8); dibaca += u8.length;
+    if (kemajuan) kemajuan(dibaca / blob.size);
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  return crc;
+}
+function waktuDos(ms) {
+  const d = new Date(ms);
+  return {
+    jam: (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1),
+    tgl: ((Math.max(1980, d.getFullYear()) - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate(),
+  };
+}
+async function buatZip(folder, berkas, waktuMs, kemajuan) {
+  const enc = new TextEncoder(), dos = waktuDos(waktuMs);
+  const bagian = [], pusat = [];
+  let offset = 0;
+  const totalVideo = berkas.reduce((a, [, isi]) => a + (isi instanceof Blob ? isi.size : 0), 0) || 1;
+  let selesaiVideo = 0;
+  for (const [nama, isi] of berkas) {
+    const data = isi instanceof Blob ? isi : enc.encode(isi);
+    const ukuran = data instanceof Blob ? data.size : data.length;
+    const crc = data instanceof Blob
+      ? await crcBlob(data, (f) => kemajuan && kemajuan((selesaiVideo + f * ukuran) / totalVideo))
+      : crcTambah(0, data);
+    if (data instanceof Blob) selesaiVideo += ukuran;
+    const n = enc.encode(folder + "/" + nama);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+    lh.setUint16(8, 0, true); lh.setUint16(10, dos.jam, true); lh.setUint16(12, dos.tgl, true);
+    lh.setUint32(14, crc, true); lh.setUint32(18, ukuran, true); lh.setUint32(22, ukuran, true);
+    lh.setUint16(26, n.length, true); lh.setUint16(28, 0, true);
+    bagian.push(lh.buffer, n, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true);
+    ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true); ch.setUint16(12, dos.jam, true);
+    ch.setUint16(14, dos.tgl, true); ch.setUint32(16, crc, true); ch.setUint32(20, ukuran, true);
+    ch.setUint32(24, ukuran, true); ch.setUint16(28, n.length, true); ch.setUint16(30, 0, true);
+    ch.setUint16(32, 0, true); ch.setUint16(34, 0, true); ch.setUint16(36, 0, true);
+    ch.setUint32(38, 0, true); ch.setUint32(42, offset, true);
+    pusat.push(ch.buffer, n);
+    offset += 30 + n.length + ukuran;
+  }
+  const ukPusat = pusat.reduce((a, b) => a + b.byteLength, 0);
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, berkas.length, true); e.setUint16(10, berkas.length, true);
+  e.setUint32(12, ukPusat, true); e.setUint32(16, offset, true); e.setUint16(20, 0, true);
+  return new Blob([...bagian, ...pusat, e.buffer], { type: "application/zip" });
+}
+
+/* ------------------------------------------------------------ daftar sesi */
+const hasilKemas = new Map();      // id -> [{nama, blob, url}]
+async function muatSesi() {
+  const wadah = $("daftarSesi");
+  let sesi = await DB.semua("sesi");
+  sesi.sort((a, b) => b.dibuat - a.dibuat);
+  if (!sesi.length) { wadah.innerHTML = '<p class="catatan">Belum ada sesi. Rekam dulu di tab Rekam.</p>'; }
+  else wadah.innerHTML = "";
+  for (const s of sesi) {
+    const sedangAktif = K.sesi && K.sesi.id === s.id;
+    const pv = await DB.potongan(s.id, "v");
+    const ukuran = pv.reduce((a, p) => a + p.data.size, 0);
+    const mulai = s.meta.waktu.mulai_epoch_ms || s.dibuat;
+    const akhir = s.meta.waktu.selesai_epoch_ms || (pv.length ? pv[pv.length - 1].t : mulai);
+    const el = document.createElement("div"); el.className = "sesi";
+    const tgl = new Date(mulai).toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    el.innerHTML = `<b>${s.meta.jenis === "kalibrasi" ? "▣" : "●"} ${xmlAman(s.nama)}</b>
+      <div class="info">${tgl} · ${teksLama((akhir - mulai) / 1000)} · video ${teksUkuran(ukuran)} (${s.ext || "mp4"})
+      ${sedangAktif ? ' · <b style="display:inline;color:var(--merah)">sedang merekam</b>'
+        : s.selesai ? "" : ' · <span style="color:var(--merah)">⚠ terputus — tetap dapat dikirim</span>'}</div>
+      <div class="aksi"></div><div class="kemajuan tersembunyi"><div></div></div><div class="hasil"></div>`;
+    const aksi = el.querySelector(".aksi");
+    if (!sedangAktif) {
+      const bK = document.createElement("button"); bK.className = "kecil biru"; bK.textContent = "Kemas & kirim";
+      bK.onclick = () => kemasDanTampil(s, el, bK);
+      const bH = document.createElement("button"); bH.className = "kecil merah"; bH.textContent = "Hapus";
+      bH.onclick = async () => {
+        if (!confirm(`Hapus sesi ${s.nama} dari HP ini? Tidak dapat dibatalkan.`)) return;
+        (hasilKemas.get(s.id) || []).forEach((f) => URL.revokeObjectURL(f.url)); hasilKemas.delete(s.id);
+        await DB.hapus(s.id); muatSesi();
+      };
+      aksi.append(bK, bH);
+    }
+    wadah.appendChild(el);
+    if (hasilKemas.has(s.id)) tampilBerkas(el, hasilKemas.get(s.id));
+  }
+  try {
+    const e = await navigator.storage.estimate();
+    $("infoPenyimpanan").textContent = `Terpakai ${teksUkuran(e.usage || 0)} dari jatah ${teksUkuran(e.quota || 0)} untuk situs ini. ` +
+      "Hapus sesi yang sudah terkirim agar ruang lega.";
+  } catch (_) {}
+}
+
+async function kemasDanTampil(s, el, tombol) {
+  tombol.disabled = true; tombol.textContent = "Mengemas…";
+  const bar = el.querySelector(".kemajuan"); bar.classList.remove("tersembunyi");
+  const isi = bar.firstElementChild;
+  try {
+    const { berkas } = await susunSesi(s);
+    const zip = await buatZip(s.nama, berkas, s.meta.waktu.mulai_epoch_ms || s.dibuat, (f) => { isi.style.width = (f * 100).toFixed(1) + "%"; });
+    const batas = Math.max(0.1, parseFloat($("batas").value) || 1900) * 1e6;
+    const daftar = [];
+    if (zip.size <= batas) daftar.push({ nama: s.nama + ".zip", blob: zip });
+    else {
+      const n = Math.ceil(zip.size / batas);
+      for (let i = 0; i < n; i++)
+        daftar.push({ nama: `${s.nama}.zip.${String(i + 1).padStart(3, "0")}`, blob: zip.slice(i * batas, Math.min(zip.size, (i + 1) * batas), "application/octet-stream") });
+    }
+    (hasilKemas.get(s.id) || []).forEach((f) => URL.revokeObjectURL(f.url));
+    daftar.forEach((f) => { f.url = URL.createObjectURL(f.blob); });
+    hasilKemas.set(s.id, daftar);
+    tampilBerkas(el, daftar);
+  } catch (e) {
+    alert("Gagal mengemas: " + (e.message || e));
+  } finally {
+    tombol.disabled = false; tombol.textContent = "Kemas ulang"; bar.classList.add("tersembunyi"); isi.style.width = "0";
+  }
+}
+
+function bisaBagikan(files) {
+  try { return !!(navigator.canShare && navigator.canShare({ files })); } catch (_) { return false; }
+}
+function tampilBerkas(el, daftar) {
+  const h = el.querySelector(".hasil"); h.innerHTML = "";
+  const semua = daftar.map((f) => new File([f.blob], f.nama, { type: f.nama.endsWith(".zip") ? "application/zip" : "application/octet-stream" }));
+  if (daftar.length > 1 && bisaBagikan(semua)) {
+    const b = document.createElement("button"); b.className = "kecil biru"; b.textContent = `Bagikan ${daftar.length} berkas sekaligus`;
+    b.onclick = () => navigator.share({ files: semua, title: daftar[0].nama }).catch(() => {});
+    h.appendChild(b);
+  }
+  daftar.forEach((f, i) => {
+    const r = document.createElement("div"); r.className = "berkas";
+    r.innerHTML = `<span>📦 ${xmlAman(f.nama)} <small style="color:var(--abu)">(${teksUkuran(f.blob.size)})</small></span>`;
+    if (bisaBagikan([semua[i]])) {
+      const b = document.createElement("button"); b.className = "kecil biru"; b.textContent = "Bagikan";
+      b.onclick = () => navigator.share({ files: [semua[i]], title: f.nama }).catch(() => {});
+      r.appendChild(b);
+    }
+    const a = document.createElement("a"); a.href = f.url; a.download = f.nama;
+    const b2 = document.createElement("button"); b2.className = "kecil"; b2.textContent = "Unduh";
+    a.appendChild(b2); r.appendChild(a);
+    h.appendChild(r);
+  });
+}
+
+/* ------------------------------------------------------------ awal */
+function pindahTab(nama) {
+  $("halBaru").classList.toggle("tersembunyi", nama !== "baru");
+  $("halSesi").classList.toggle("tersembunyi", nama !== "sesi");
+  $("tabBaru").classList.toggle("aktif", nama === "baru");
+  $("tabSesi").classList.toggle("aktif", nama === "sesi");
+  if (nama === "sesi") muatSesi();
+}
+
+(async function awal() {
+  if (!window.isSecureContext) $("pesanAman").classList.remove("tersembunyi");
+  const kurang = [];
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) kurang.push("kamera");
+  if (typeof MediaRecorder === "undefined") kurang.push("perekam video");
+  if (!("geolocation" in navigator)) kurang.push("GPS");
+  if (typeof DeviceMotionEvent === "undefined") kurang.push("sensor getaran");
+  if (!window.indexedDB) kurang.push("penyimpanan");
+  if (kurang.length) {
+    const el = $("pesanDukungan");
+    el.textContent = "Peramban ini tidak menyediakan: " + kurang.join(", ") + ". Pakai Chrome terbaru (Android) atau Safari (iPhone, iOS 14.3+).";
+    el.classList.remove("tersembunyi");
+  }
+  const m = pilihMime();
+  if (m && !m.startsWith("video/mp4")) {
+    const el = $("pesanDukungan");
+    el.textContent = "Peramban ini hanya dapat merekam WebM (" + m + "), bukan MP4. Perbarui Chrome ke versi terbaru agar video tersimpan sebagai MP4.";
+    el.classList.remove("tersembunyi");
+  }
+  $("caraKirim").innerHTML = IOS
+    ? "Ketuk <b>Kemas &amp; kirim</b>, lalu <b>Bagikan</b> → pilih <b>WhatsApp</b> → pilih kontak/grup. Berkas terkirim sebagai dokumen, tanpa dikompres. " +
+      "Di Windows: buka WhatsApp Desktop/Web, unduh berkasnya, lalu impor ke PaveScanPro-ITS seperti sesi PaveRec biasa — tunjuk berkas .zip (atau .zip.001)."
+    : "Ketuk <b>Kemas &amp; kirim</b>, lalu <b>Unduh</b> (berkas masuk ke folder <i>Download</i>). Di WhatsApp: 📎 <b>Lampirkan → Dokumen</b> → buka folder Download → pilih berkas .zip. " +
+      "Bila tombol <b>Bagikan</b> muncul, itu cara tercepat. Jangan kirim lewat Galeri (video akan dikompres). " +
+      "Di Windows: unduh dari WhatsApp Desktop/Web, lalu impor ke PaveScanPro-ITS seperti sesi PaveRec biasa — tunjuk berkas .zip (atau .zip.001).";
+  try { $("hfov").value = localStorage.getItem("paverec.hfov") || ""; $("surveyor").value = localStorage.getItem("paverec.surveyor") || ""; } catch (_) {}
+  document.querySelectorAll('input[name="jenis"]').forEach((r) => r.addEventListener("change", () => {
+    $("ketJenis").textContent = jenisDipilih() === "kalibrasi"
+      ? "Rekam banner target 10 detik dari posisi pasang kamera survei. Kendaraan diam, banner utuh di layar (6 kotak merah)."
+      : "Rekam video, GPS, dan getaran sepanjang ruas. Henti manual.";
+  }));
+  $("tabBaru").onclick = () => pindahTab("baru");
+  $("tabSesi").onclick = () => pindahTab("sesi");
+  $("btnSiapkan").onclick = siapkan;
+  $("btnTutup").onclick = tutupKamera;
+  $("btnRekam").onclick = () => (K.merekam ? hentiRekam() : mulaiRekam());
+  $("kamera").onchange = () => { if (K.aliran && !K.merekam) bukaAliran().catch((e) => tampilPesan("Kamera: " + e.message)); };
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && K.aliran) kunciLayar();
+    if (document.visibilityState === "hidden" && K.merekam) K.catatan.push("halaman sempat tidak tampil (layar mati / pindah aplikasi) pada detik " + Math.round((sekarang() - K.mulaiMs) / 1000));
+  });
+  window.addEventListener("pagehide", () => { if (K.merekam) siramBuffer(); });
+  try { await DB.buka(); } catch (e) {
+    const el = $("pesanDukungan"); el.textContent = "Penyimpanan peramban tidak dapat dibuka (mode penyamaran?): " + e.message; el.classList.remove("tersembunyi");
+  }
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+  window.PaveRec = { K, DB, susunSesi, buatZip, namaSesi, tunduk, miring };     // untuk pengujian
+})();
+</script>
+</body>
+</html>
